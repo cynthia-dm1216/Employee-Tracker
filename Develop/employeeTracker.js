@@ -63,6 +63,10 @@ function runSearch() {
     viewAllDept();
     break;
 
+    case "Remove Department":
+    removeDept();
+    break;
+
     case "Add Roles":
     addRole();
     break;
@@ -153,7 +157,8 @@ function removeEmployee(){
       };
 
 function viewAllEmployees(){
-  connection.query ("SELECT * FROM employees", function(err,res){
+  connection.query ("SELECT employees.first_name, employees.last_name, roles.title AS \"role\", managers.first_name AS \"manager\" FROM employees LEFT JOIN roles ON employees.role_id = roles.id LEFT JOIN employees managers ON employees.manager_id = managers.id GROUP BY employees.id",
+   function(err,res){
     if (err) throw err;
     console.table(res);
     runSearch();
@@ -188,6 +193,9 @@ connection.query("SELECT * FROM departmnet",function(err,res){
   console.table(res);
   runSearch();
 });
+}
+function removeDept(){
+  return connection.query("DELETE FROM department WHERE name = ?");
 }
 
 function addRole(){
@@ -231,14 +239,7 @@ function viewAllRoles(){
   });
 }
 
-// function addRole(){
-//   let department = [];
-//   connection.query("SELECT * FROM department",function(err,res){
-//     if(err) throw err;
-//     for(let i = 0; i <res.length; i++){
-//       res[i].first_name + " " + res[i].last_name
-//       department.push({name:res[i].name,value: res[i].id});
-//     }
+
 function updateEmployeeRole(){
   connection.query("SELECT firs_name, last_name, id FROM employees", 
   function(err,res){
@@ -260,7 +261,7 @@ function updateEmployeeRole(){
         message:"What is the new role for the employee?"
       }
     ]).then (function(res){
-      connection.query(`UPDATE employees SET role_id = ${res.role} WHERE id = ${res.employeesName}`,
+      connection.query(`UPDATE employees SET role_id = ? WHERE employees.id = ?`,
       function(err, res){
         console.log(res);
         runSearch();
