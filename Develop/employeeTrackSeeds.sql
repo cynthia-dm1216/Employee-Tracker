@@ -6,3 +6,4 @@ VALUES ("Manager",200,1), ("Lawyer",400,2), ("Intern",10,3);
 
 INSERT INTO department (name)
 VALUES ('Administration'), ("Criminal"), ('Education')
+

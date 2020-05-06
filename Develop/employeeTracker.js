@@ -11,7 +11,7 @@ var connection = mysql.createConnection({
   user: "root",
 
   // Your password
-  password: "process.env.DB_PASSWORD",
+  password: "Martinez1216",
   database: "employee_tackerDB"
 });
 
@@ -101,30 +101,59 @@ function addEmployee() {
       name:"last_name"
     },
     {
-      type:"input",
+      type:"list",
       message:"What is the employees role?",
-      name:"role_id",
-      choices: [1,2,3]
+      name:"role",
+      choices: [
+        'Doctor',
+        'Intern',
+        'Manager',
+        'Lawyer',
+        'Lead Engineer',
+        'Salesperson',
+        'None'
+      ]
+      // choices should be ["Doctor", "Intern", "Manager"]
     },
     {
-      type:"input",
+      type:"list",
       message:"Who is the Manager?",
-      name:"manager_id"
+      name:"manager",
+      choices: [
+        'Rodriguez',
+        'Tavarez',
+        'Wilson',
+        'Flores',
+        'None'
+      ]
     },
   ])
   .then(function(answer){
-    var query = connection.query(
-      "INSERT INTO employees SET ?",
-      answer,
-      function(err,res) {
-        if (err) throw err;
-        console.log("Employee added!\n");
-        runSearch();
-      }
-    );
-    console.log(query.sql);
-  })
-}
+    //make a call to your database's roles table for the answer.role that they chose
+    connection.query('SELECT id FROM roles WHERE title = ?')
+      //SELECT row where the role name is equal to the answer.role
+      "SELECT row WHERE roles.title: answer.roles"
+        //use that role's id number and set to variable
+        connection.query().then(function(result){
+          console.log(result); //probably be result.id
+          var query = connection.query(
+            "INSERT INTO employees SET ?",
+            {
+              first_name: answer.first_name,
+              last_name: answer.last_name,
+              role_id: answer.roles,
+              manager_id: answer.manager
+            },
+            function(err,res) {
+              if (err) throw err;
+              console.log("Employee added!\n");
+              runSearch();
+            }
+          );
+          console.log(query.sql);
+        })
+      })
+    }
 
 function removeEmployee(){
   let employeeList = [];
@@ -219,13 +248,25 @@ function addRole(){
         message:"What is the salary for the role?"
       },
       {
-        type:"input",
+        type:"list",
         name:"department",
         message:"What type of department?",
         choices: department
       }
     ]).then (function(res){
       console.log(res);
+      const query = connection.query(
+        "INSERT INTO roles SET ?",
+        {
+          title: res.title,
+          salary: res.salary,
+          department_id: res.department
+        },
+        function (err, res){
+          if(err) throw err;
+          runSearch();
+        }
+      )
     })
   })
 }
@@ -243,10 +284,10 @@ function viewAllRoles(){
 function updateEmployeeRole(){
   connection.query("SELECT firs_name, last_name, id FROM employees", 
   function(err,res){
-      for (let i=0; i <res.length; i++){
-    employees.push({employees:res[i].first_name,employees:res[i].last_name,value:res[i].id});
-  }
-    //let employees = res.map(employees => ({name: employees.first_name + " " + employees.last_name, values:employees.id}))
+  //     for (let i=0; i <res.length; i++){
+  //   employees.push({employees:res[i].first_name,employees:res[i].last_name,value:res[i].id});
+  // }
+    let employees = res.map(employees => ({name: employees.first_name + " " + employees.last_name, values:employees.id}))
     inquirer
     .prompt([
       {
@@ -261,7 +302,7 @@ function updateEmployeeRole(){
         message:"What is the new role for the employee?"
       }
     ]).then (function(res){
-      connection.query(`UPDATE employees SET role_id = ? WHERE employees.id = ?`,
+      connection.query(`UPDATE employees SET role_id = ${res.title} WHERE employees.id = ${res.employeeID}`,
       function(err, res){
         console.log(res);
         runSearch();
