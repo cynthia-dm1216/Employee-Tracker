@@ -12,7 +12,7 @@ var connection = mysql.createConnection({
 
   // Your password
   password: "Martinez1216",
-  database: "employee_tackerDB"
+  database: "employee_trackerDB"
 });
 
 connection.connect(function (err) {
@@ -39,8 +39,7 @@ function runSearch() {
         "Exit"
       ]
     }).then(function (answer, action) {
-
-      console.log("after first inquirere prompt, answer,action " + JSON.stringify(answer, action));
+      console.log("after first inquirer prompt, answer,action " + JSON.stringify(answer, action));
       switch (answer.action) {
         case "Add Employee":
           addEmployee();
@@ -51,7 +50,7 @@ function runSearch() {
           break;
 
         case "Remove Employee":
-          removeEmployee();
+          removeEmployees();
           break;
 
         case "Add Department":
@@ -85,87 +84,73 @@ function runSearch() {
     });
 }
 
-function addEmployee() {
-  console.log('Inserting a new employee. \n');
-  inquirer
-    .prompt([
-      {
-        type: "input",
-        message: "Enter First Name",
-        name: "first_name"
-      },
-      {
-        type: "input",
-        message: "Enter Last Name",
-        name: "last_name"
-      },
-      {
-        type: "list",
-        message: "What is the employees role?",
-        name: "role",
-        choices: [
-          'Doctor',
-          'Intern',
-          'Manager',
-          'Lawyer',
-          'Lead Engineer',
-          'Salesperson',
-          'None'
-        ]
-      },
-      {
-        type: "list",
-        message: "Who is the Manager?",
-        name: "manager",
-        choices: [
-          'Rodriguez',
-          'Tavarez',
-          'Wilson',
-          'Flores',
-          'None'
-        ]
-      },
-    ])
-   .then(function(answer) {
-    connection.query(
-      "INSERT INTO employee SET ?",
-      {
-        first_name: answer.firstname,
-        last_name: answer.lastname,
-        role_id: answer.role,
-        manager_id: answer.manager
-      },
-      function(err, answer) {
-        if (err) {
-          throw err;
-        }
-        console.table(answer);
-      }
-    );
-    runSearch();
-  });
-}
+function addEmployee(){
+    
+  inquirer.prompt([{
+      name:"first_name",
+      type:"input",
+      message:"What is the new first name?"
+  },
+  {
+      name:"last_name",
+      type: "input",
+      message: "What is the new last name?"
+  },
+  {
+      name:"role_id",
+      type: "input",
+      message:"What is the role id? (1,2,3,4)",
+      choices:[1,2,3,4]
+  },
+  {
+      name: "manager_id",
+      type: "rawlist",
+      message: "What is the manager id number?",
+      choices: [1,0]
+    }
+  ]).then(function(answer){
+    console.log(answer);
+      connection.query(
+          "INSERT INTO employee SET ?",
+          {
+              first_name: answer.first_name,
+              last_name: answer.last_name,
+              role_id: answer.role_id,
+              manager_id: answer.manager_id
+              
+          },
+          function(err){
+              if(err) throw err;
+              console.log("Employee Added!")
+              runSearch();
+          }
+      )
+      
+  })
+  
+  }
 
-function removeEmployee() {
-  let employeeList = [];
+
+function removeEmployees() {
+  let employeesList = [];
   connection.query(
-    "SELECT employees.first_name, employees.last_name FROM employees", (err, res) => {
+    "SELECT employees.first_name, employees.last_name FROM employee_trackerDB.employees", (err, res) => {
       for (let i = 0; i < res.length; i++) {
-        employeeList.push(res[i].first_name + " " + res[i].last_name);
+        employeesList.push(res[i].first_name + " " + res[i].last_name);
       }
       inquirer
         .prompt([
           {
             type: "list",
-            message: "Which employee would you like to delete?",
-            name: "employee",
+            message: "Which employees would you like to delete?",
+            name: "employees",
             choices: employeeList
 
           },
         ])
         .then(function (res) {
           const query = connection.query(
-            `DELETE FROM employees WHERE concat(first_name, ' ' ,last_name) = '${res.employee}'`,
+            `DELETE FROM employees WHERE concat(first_name, ' ' ,last_name) = '${res.employees}'`,
             function (err, res) {
               if (err) throw err;
               console.log("Employee deleted!\n");
@@ -200,7 +185,7 @@ function addDept() {
           name: res.deptName
         },
         function (err, res) {
-          connection.query("SELECT * FROM department", function (err, res) {
+          connection.query("SELECT * FROM employee_trackerDB.department", function (err, res) {
             console.table(res);
             runSearch();
           })
@@ -213,7 +198,7 @@ function removeDept() {
 
 function addRole() {
   let department = [];
-  connection.query("SELECT * FROM department", function (err, res) {
+  connection.query("SELECT * FROM employee_trackerDB.department", function (err, res) {
     if (err) throw err;
     for (let i = 0; i < res.length; i++) {
       res[i].first_name + " " + res[i].last_name
@@ -266,9 +251,9 @@ function viewAllRoles() {
 
 
 function updateEmployeeRole() {
- console.log("updating employee");
+ console.log("updating employees");
  let newEmp = [];
- connection.query("SELECT * FROM employees",function (err,answer){
+ connection.query("SELECT * FROM employee_trackerDB.employees",function (err,answer){
   //  console.log(answer);
  for (let i = 0; i < answer.length; i++){
    let employeesString = answer[i].id + '' + answer[i].first_name 
@@ -281,28 +266,28 @@ function updateEmployeeRole() {
    {
      type: "list",
      name: "updateEmpRole",
-     message: "select employee to update role",
+     message: "select employees to update role",
      choices: newEmp
    },
    {
      type: "list",
      message: "select new role",
-     choices: ["manager", "employee"],
+     choices: ["manager", "employees"],
      name: "newrole"
    }
  ])
  .then(function(answer) {
    console.log("about to update", answer);
    const idToUpdate = {};
-   idToUpdate.employeeId = parseInt(answer.updateEmpRole.split(" ")[0]);
+   idToUpdate.employeesId = parseInt(answer.updateEmpRole.split(" ")[0]);
    if (answer.newrole === "manager") {
      idToUpdate.role_id = 1;
-   } else if (answer.newrole === "employee") {
+   } else if (answer.newrole === "employees") {
      idToUpdate.role_id = 2;
    }
    connection.query(
-     "UPDATE employee SET role_id = ? WHERE id = ?",
-     [idToUpdate.role_id, idToUpdate.employeeId],
+     "UPDATE employees SET role_id = ? WHERE id = ?",
+     [idToUpdate.role_id, idToUpdate.employeesId],
      function(err, data) {
        runSearch();
      }

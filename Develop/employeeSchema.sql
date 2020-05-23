@@ -1,8 +1,8 @@
- DROP DATABASE IF EXISTS employee_tackerDB;
+ DROP DATABASE IF EXISTS employee_trackerdb;
 
-CREATE DATABASE employee_tackerDB;
+CREATE DATABASE employee_trackerdb;
 
-USE employee_tackerDB;
+USE employee_trackerdb;
 
 CREATE TABLE employees (
     id INT AUTO_INCREMET PRIMARY KEY,
@@ -23,7 +23,3 @@ CREATE TABLE roles (
     salary DECIMAL(30.3),
     department_id INT(10)
 );
-
-SELECT * FROM employees;
-SELECT * FROM roles;
-SELECT * FROM department;
